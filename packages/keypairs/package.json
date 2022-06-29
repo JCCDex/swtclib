@@ -1,6 +1,6 @@
 {
   "name": "@swtc/keypairs",
-  "version": "1.0.10",
+  "version": "1.1.4",
   "description": "swtc keypairs",
   "files": [
     "dist",
@@ -10,19 +10,30 @@
   "main": "cjs/index.js",
   "module": "esm/index.js",
   "dependencies": {
-    "@swtc/address-codec": "^1.0.7",
-    "@swtc/common": "^1.0.11",
+    "@swtc/address-codec": "^1.1.1",
+    "@swtc/common": "^1.1.1",
+    "@swtc/sm.js": "^0.1.12",
     "bn.js": "^4.4.0",
     "brorand": "^1.1.0",
     "elliptic": "^6.4.0",
     "hash.js": "^1.0.3"
   },
   "devDependencies": {
-    "@types/jest": "^24.9.1",
-    "jest": "^25.0.0",
-    "mocha": "^6.2.0",
-    "prettier": "^1.19.1",
-    "rollup": "^1.29.1"
+    "@rollup/plugin-commonjs": "^14.0.0",
+    "@rollup/plugin-json": "^4.1.0",
+    "@rollup/plugin-node-resolve": "^8.4.0",
+    "@rollup/plugin-typescript": "^5.0.2",
+    "@types/jest": "^26.0.8",
+    "husky": "^4.2.5",
+    "jest": "^26.1.0",
+    "mocha": "^8.0.1",
+    "prettier": "^2.0.5",
+    "pretty-quick": "^2.0.1",
+    "rollup": "^2.23.0",
+    "rollup-plugin-terser": "^6.1.0",
+    "tslib": "^2.0.0",
+    "tslint": "^6.1.2",
+    "typescript": "^3.9.7"
   },
   "scripts": {
     "clean": "rm -fr esm cjs dist src package-lock.json node_modules",
@@ -36,6 +47,7 @@
     "prettier:tabs": "prettier --use-tabs --write package.json tssrc/*.ts",
     "tslint": "tslint tssrc/*.ts",
     "test:jest": "jest",
+    "test:guomi": "mocha \"test/guomi*.js\"",
     "test": "mocha test/test*js"
   },
   "repository": {

@@ -19,11 +19,12 @@
  * Convert the input JSON format commands to
  * Hex value for local sign operation.
  */
-import assert from "assert"
 import extend from "extend"
 import hashjs from "hash.js"
 import { Factory as WalletFactory } from "@swtc/wallet"
 import {
+  funcAssert as assert,
+  SM3,
   LEDGER_ENTRY_TYPES,
   METADATA,
   REQUIRED,
@@ -43,6 +44,7 @@ const Factory = (Wallet = WalletFactory("jingtum")) => {
     throw Error("Serializer need a Wallet class")
   }
   const stypes: any = stypesFactory(Wallet)
+  const guomi = Wallet.guomi
 
   return class Serializer {
     public static TypeUtils = stypes
@@ -227,7 +229,7 @@ const Factory = (Wallet = WalletFactory("jingtum")) => {
     }
 
     public static lookup_type_tx(id) {
-      assert.strictEqual(typeof id, "number")
+      assert(typeof id === "number")
       return TRANSACTION_TYPES[id]
     }
 
@@ -394,11 +396,9 @@ const Factory = (Wallet = WalletFactory("jingtum")) => {
       sign_buffer.append(this.buffer)
 
       return this.bytes_to_str(
-        hashjs
-          .sha512()
-          .update(sign_buffer.buffer)
-          .digest()
-          .slice(0, 32)
+        guomi
+          ? new SM3().update(sign_buffer.buffer).digest()
+          : hashjs.sha512().update(sign_buffer.buffer).digest().slice(0, 32)
       )
     }
   }

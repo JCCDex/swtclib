@@ -5,6 +5,9 @@ export const NODE_TYPES = ["CreatedNode", "ModifiedNode", "DeletedNode"]
 export const ZERO =
   "0000000000000000000000000000000000000000000000000000000000000000"
 
+export const ACCOUNT_ID_ZERO = ZERO.substr(0, 40)
+export const ACCOUNT_ID_ONE = ZERO.substr(0, 39) + "1"
+
 export const HASHPREFIX = {
   transactionID: 0x54584e00, // 事务哈希
   // transaction plus metadata
@@ -75,10 +78,10 @@ export const CHAINS = [
       ETH: "JETH"
     },
     XLIB: {
-      default_ws: "ws.swtclib.ca:5020",
-      default_api: "api.swtclib.ca:5080",
-      default_ws_failover: "ws-failover.swtclib.ca:5020",
-      default_api_failover: "api-failover.swtclib.ca:5080"
+      default_ws: "ws.bcapps.ca:5020",
+      default_api: "api.bcapps.ca:5080",
+      default_ws_failover: "ws-failover.bcapps.ca:5020",
+      default_api_failover: "api-failover.bcapps.ca:5080"
     },
     ACCOUNT_ALPHABET:
       "jpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65rkm8oFqi1tuvAxyz",
@@ -89,14 +92,30 @@ export const CHAINS = [
     fee: 10000
   },
   {
+    code: "guomi",
+    guomi: true,
+    currency: "SWT",
+    issuer: "j9syYwWgtmjchcbqhVB18pmFqXUYahZvvg",
+    CURRENCIES: {
+      CNT: "CNY"
+    },
+    ACCOUNT_ALPHABET:
+      "jpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65rkm8oFqi1tuvAxyz",
+    SEED_PREFIX: 33,
+    ACCOUNT_PREFIX: 0,
+    ACCOUNT_ZERO: "jjjjjjjjjjjjjjjjjjjjjn1TT5q",
+    ACCOUNT_ONE: "jjjjjjjjjjjjjjjjjjjjwVBfmE",
+    fee: 100
+  },
+  {
     code: "bizain",
     currency: "BWT",
     issuer: "bf42S78serP2BeSx7HGtwQR2QASYaHVqyb",
     XLIB: {
-      default_ws: "ws-bwt.swtclib.ca:5020",
-      default_api: "api-bwt.swtclib.ca:5080",
-      default_ws_failover: "ws-bwt-failover.swtclib.ca:5020",
-      default_api_failover: "api-bwt-failover.swtclib.ca:5080"
+      default_ws: "ws-bwt.bcapps.ca:5020",
+      default_api: "api-bwt.bcapps.ca:5080",
+      default_ws_failover: "ws-bwt-failover.bcapps.ca:5020",
+      default_api_failover: "api-bwt-failover.bcapps.ca:5080"
     },
     ACCOUNT_ALPHABET:
       "bpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2jcdeCg65rkm8oFqi1tuvAxyz",

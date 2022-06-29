@@ -5,9 +5,12 @@ const Transaction = Factory()
 
 export { Factory, Transaction }
 export {
-  IMarker,
+  IXlib,
+  ICurrencies,
   ICurrency,
   IAmount,
+  IMarker,
+  IChainConfig,
   ISwtcTxOptions,
   IPaymentTxOptions,
   IOfferCreateTxOptions,
@@ -22,5 +25,6 @@ export {
   ISignerListTxOptions,
   ISignFirstTxOptions,
   ISignOtherTxOptions,
-  IMultiSigningOptions
+  IMultiSigningOptions,
+  IBrokerageTxOptions
 } from "./types"

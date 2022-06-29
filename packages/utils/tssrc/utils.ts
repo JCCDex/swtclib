@@ -223,6 +223,7 @@ const Factory = (Wallet = WalletFactory("jingtum")) => {
     // if(tx.TransactionType !== 'RelationSet')
     result.result = meta ? meta.TransactionResult : "failed"
     result.memos = []
+    result.ledger_index = tx.ledger_index
     const l = []
     switch (result.type) {
       case "sent":
@@ -315,6 +316,27 @@ const Factory = (Wallet = WalletFactory("jingtum")) => {
         result.lists = l
         result.seq = tx.Sequence
         break
+      case "setblacklist":
+      case "removeblacklist":
+        result.code = tx.FundCode
+        result.black = tx.BlackListAccountID
+        break
+      case "tokenissue":
+        result.account = tx.Account
+        result.publisher = tx.Issuer
+        result.token = convertHexToString(tx.FundCode)
+        result.number = parseInt(tx.TokenSize, 16)
+        break
+      case "transfertoken":
+        result.publisher = tx.Account
+        result.receiver = tx.Destination
+        result.token = convertHexToString(tx.FundCode)
+        result.tokenId = tx.TokenID
+        break
+      case "tokendel":
+        result.publisher = tx.Account
+        result.tokenId = tx.TokenID
+        break
       default:
         // TODO parse other type
         break
@@ -328,13 +350,23 @@ const Factory = (Wallet = WalletFactory("jingtum")) => {
     if (Array.isArray(tx.Memos) && tx.Memos.length > 0) {
       for (const m of tx.Memos) {
         const memo = m.Memo
-        for (const property in memo) {
-          try {
-            memo[property] = convertHexToString(memo[property])
-          } catch (e) {
-            // TODO to unify to utf8
-            // memo[property] = memo[property];
+        if ("MemoFormat" in memo) {
+          memo.MemoFormat = convertHexToString(memo.MemoFormat)
+          if (memo.MemoFormat !== "hex") {
+            try {
+              memo.MemoData = convertHexToString(memo.MemoData)
+            } catch (e) {}
           }
+          if (memo.MemoFormat === "json") {
+            try {
+              memo.MemoData = JSON.parse(memo.MemoData)
+            } catch (e) {}
+          }
+          delete memo.MemoFormat
+        } else {
+          try {
+            memo.MemoData = convertHexToString(memo.MemoData)
+          } catch (e) {}
         }
         result.memos.push(memo)
       }
@@ -535,6 +567,12 @@ const Factory = (Wallet = WalletFactory("jingtum")) => {
           .div(parseInt(node.fields.OfferFeeRateDen, 16))
           .toNumber()
       }
+      if (node && node.entryType === "ETHState") {
+        // 合约调用日志
+        if (node.fields && node.fields.info) {
+          result.eventLog = hexToString(node.fields.info)
+        }
+      }
       if (node && node.entryType === "SkywellState") {
         // 其他币种余额
         if (
@@ -616,10 +654,13 @@ const Factory = (Wallet = WalletFactory("jingtum")) => {
             .plus(totalRate)
             .toNumber()
         e.rate = result.rate
-        e.got.value = e.got.value * (1 - e.rate)
         e.platform = result.platform
         e.got.value = new Bignumber(e.got.value)
           .multipliedBy(1 - e.rate)
+          .toString()
+        e.fee = new Bignumber(e.got.value)
+          .div(1 - e.rate)
+          .multipliedBy(e.rate)
           .toString()
       }
       if (
@@ -633,6 +674,10 @@ const Factory = (Wallet = WalletFactory("jingtum")) => {
           .toNumber()
         e.got.value = new Bignumber(e.got.value)
           .multipliedBy(1 - e.rate)
+          .toString()
+        e.fee = new Bignumber(e.got.value)
+          .div(1 - e.rate)
+          .multipliedBy(e.rate)
           .toString()
       }
     }
@@ -733,7 +778,16 @@ const Factory = (Wallet = WalletFactory("jingtum")) => {
     return new Error("invalid amount to max")
   }
 
+  const eth2Jingtum = ethadr => {
+    const buf = Buffer.alloc(20)
+    let b = ethadr.replace(/0x/i, "")
+    b = b.length > 40 ? b.slice(24) : b
+    buf.write(b, 0, "hex")
+    return Wallet.KeyPair.addressCodec.encodeAddress(buf)
+  }
+
   return {
+    guomi: Wallet.guomi,
     isValidAmount,
     isValidAmount0,
     parseAmount,
@@ -761,6 +815,7 @@ const Factory = (Wallet = WalletFactory("jingtum")) => {
     number2Hex,
     hex2Number,
     getTypes,
+    eth2Jingtum,
     // toolset
     makeCurrency,
     makeAmount

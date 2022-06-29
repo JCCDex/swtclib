@@ -135,6 +135,9 @@ const TRANSACTION_TYPES = {
       ["Destination", OPTIONAL]
     ]
   ],
+  SetBlackList: [201, ...BASE, ...[["BlackListAccountID", REQUIRED]]],
+  RemoveBlackList: [202, ...BASE, ...[["BlackListAccountID", REQUIRED]]],
+  ManageIssuer: [203, ...BASE, ...[["IssuerAccountID", REQUIRED]]],
   Brokerage: [
     205,
     ...BASE,
@@ -145,6 +148,15 @@ const TRANSACTION_TYPES = {
       ["Amount", REQUIRED]
     ]
   ],
+  IssueSet: [
+    206,
+    ...BASE,
+    ...[
+      ["TotalAmount", REQUIRED],
+      ["IssuedAmount", OPTIONAL],
+      ["TotalUsers", OPTIONAL]
+    ]
+  ],
   // add for multisign
   SignerListSet: [
     207,
@@ -153,7 +165,29 @@ const TRANSACTION_TYPES = {
       ["SignerQuorum", REQUIRED],
       ["SignerEntries", OPTIONAL]
     ]
-  ]
+  ],
+  TransferToken: [
+    208,
+    ...BASE,
+    ...[
+      ["TokenID", REQUIRED],
+      ["Destination", REQUIRED],
+      ["Domain", OPTIONAL],
+      ["FundCode", OPTIONAL],
+      ["TokenInfos", OPTIONAL]
+    ]
+  ],
+  TokenIssue: [
+    209,
+    ...BASE,
+    ...[
+      ["TokenSize", REQUIRED],
+      ["FundCode", REQUIRED],
+      ["Issuer", REQUIRED],
+      ["AuthorizedAccount", OPTIONAL]
+    ]
+  ],
+  TokenDel: [210, ...BASE, ...[["TokenID", REQUIRED]]]
 }
 
 const SLE_BASE = [
@@ -397,7 +431,10 @@ const FIELDS_MAP = {
     7: "LowNode",
     8: "HighNode",
     9: "OfferFeeRateNum",
-    10: "OfferFeeRateDen"
+    10: "OfferFeeRateDen",
+    12: "TotalUsers",
+    13: "TokenSize",
+    14: "TokenIssued"
   },
   4: {
     // Hash128
@@ -418,7 +455,8 @@ const FIELDS_MAP = {
     17: "InvoiceID",
     18: "Nickname",
     19: "Amendment",
-    20: "TicketID"
+    20: "TicketID",
+    21: "TokenID"
   },
   6: {
     // Amount
@@ -431,6 +469,8 @@ const FIELDS_MAP = {
     7: "HighLimit",
     8: "Fee",
     9: "SendMax",
+    10: "TotalAmount",
+    11: "IssuedAmount",
     16: "MinimumOffer",
     17: "JingtumEscrow",
     18: "DeliveredAmount"
@@ -454,7 +494,9 @@ const FIELDS_MAP = {
     15: "Payload",
     17: "ContractMethod",
     18: "Parameter",
-    20: "MethodSignature"
+    20: "MethodSignature",
+    21: "InfoData",
+    22: "InfoType"
   },
   8: {
     // Account
@@ -465,7 +507,11 @@ const FIELDS_MAP = {
     7: "Target",
     8: "RegularKey",
     9: "FeeAccountID",
-    13: "Platform"
+    10: "BlackListAccountID",
+    11: "IssuerAccountID",
+    13: "Platform",
+    14: "TokenOwner",
+    15: "AuthorizedAccount"
   },
   14: {
     // Object
@@ -481,7 +527,8 @@ const FIELDS_MAP = {
     10: "Memo",
     11: "Arg",
     12: "SignerEntry",
-    13: "Signer"
+    13: "Signer",
+    15: "TokenInfo"
   },
   15: {
     // Array
@@ -496,7 +543,8 @@ const FIELDS_MAP = {
     9: "Memos",
     10: "Args",
     11: "SignerEntries",
-    12: "Signers"
+    12: "Signers",
+    14: "TokenInfos"
   },
 
   // Uncommon types
@@ -583,6 +631,9 @@ const INVERSE_FIELDS_MAP = {
   HighNode: [3, 8],
   OfferFeeRateNum: [3, 9],
   OfferFeeRateDen: [3, 10],
+  TotalUsers: [3, 12],
+  TokenSize: [3, 13],
+  TokenIssued: [3, 14],
   EmailHash: [4, 1],
   LedgerHash: [5, 1],
   ParentHash: [5, 2],
@@ -598,6 +649,7 @@ const INVERSE_FIELDS_MAP = {
   Nickname: [5, 18],
   Amendment: [5, 19],
   TicketID: [5, 20],
+  TokenID: [5, 21],
   Amount: [6, 1],
   Balance: [6, 2],
   LimitAmount: [6, 3],
@@ -607,6 +659,8 @@ const INVERSE_FIELDS_MAP = {
   HighLimit: [6, 7],
   Fee: [6, 8],
   SendMax: [6, 9],
+  TotalAmount: [6, 10],
+  IssuedAmount: [6, 11],
   MinimumOffer: [6, 16],
   JingtumEscrow: [6, 17],
   DeliveredAmount: [6, 18],
@@ -628,6 +682,8 @@ const INVERSE_FIELDS_MAP = {
   ContractMethod: [7, 17],
   Parameter: [7, 18],
   MethodSignature: [7, 20],
+  InfoData: [7, 21],
+  InfoType: [7, 22],
   Account: [8, 1],
   Owner: [8, 2],
   Destination: [8, 3],
@@ -635,7 +691,11 @@ const INVERSE_FIELDS_MAP = {
   Target: [8, 7],
   RegularKey: [8, 8],
   FeeAccountID: [8, 9],
+  BlackListAccountID: [8, 10],
+  IssuerAccountID: [8, 11],
   Platform: [8, 13],
+  TokenOwner: [8, 14],
+  AuthorizedAccount: [8, 15],
   undefined: [15, 1],
   TransactionMetaData: [14, 2],
   CreatedNode: [14, 3],
@@ -650,6 +710,7 @@ const INVERSE_FIELDS_MAP = {
   Arg: [14, 11],
   SignerEntry: [14, 12],
   Signer: [14, 13],
+  TokenInfo: [14, 15],
   SigningAccounts: [15, 2],
   TxnSignatures: [15, 3],
   Signatures: [15, 4],
@@ -662,6 +723,7 @@ const INVERSE_FIELDS_MAP = {
   Args: [15, 10],
   SignerEntries: [15, 11],
   Signers: [15, 12],
+  TokenInfos: [15, 14],
   CloseResolution: [16, 1],
   TemplateEntryType: [16, 2],
   TransactionResult: [16, 3],
@@ -839,8 +901,20 @@ const get_transaction_type = (structure: number | string): number | string => {
         case 101:
           output = "SetFee"
           break
+        case 201:
+          output = "SetBlackList"
+          break
+        case 202:
+          output = "RemoveBlackList"
+          break
+        case 203:
+          output = "ManageIssuer"
+          break
         case 205:
           output = "Brokerage"
+          break
+        case 206:
+          output = "IssueSet"
           break
         default:
           throw new Error("Invalid transaction type!")
@@ -886,6 +960,18 @@ const get_transaction_type = (structure: number | string): number | string => {
           break
         case "SetFee":
           output = 101
+          break
+        case "SetBlackList":
+          output = 201
+          break
+        case "RemoveBlackList":
+          output = 202
+          break
+        case "ManageIssuer":
+          output = 203
+          break
+        case "IssueSet":
+          output = 206
           break
         case "Brokerage":
           output = 205

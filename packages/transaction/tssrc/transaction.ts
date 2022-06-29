@@ -4,17 +4,15 @@ import { Factory as UtilsFactory } from "@swtc/utils"
 import { Factory as WalletFactory } from "@swtc/wallet"
 import {
   HASHPREFIX,
-  tx_json_filter,
   convertStringToHex,
-  // convertHexToString,
-  normalize_memo,
-  isHexMemoString
+  normalize_swt,
+  normalize_memo
 } from "@swtc/common"
 import {
   // IMarker
   // ICurrency,
-  // IAmount,
   // ISwtcTxOptions,
+  IChainConfig,
   IPaymentTxOptions,
   IOfferCreateTxOptions,
   IOfferCancelTxOptions,
@@ -29,10 +27,19 @@ import {
   ISignerListTxOptions,
   ISignFirstTxOptions,
   ISignOtherTxOptions,
-  IMultiSigningOptions
+  IMultiSigningOptions,
+  IBrokerageTxOptions
 } from "./types"
 
-function Factory(Wallet = WalletFactory("jingtum")) {
+function Factory(
+  chain_or_wallet: () => {} | string | IChainConfig = WalletFactory("jingtum")
+) {
+  let Wallet
+  if (typeof chain_or_wallet === "function") {
+    Wallet = chain_or_wallet
+  } else {
+    Wallet = WalletFactory(chain_or_wallet)
+  }
   if (!Wallet.hasOwnProperty("KeyPair")) {
     throw Error("transaction needs a Wallet class")
   }
@@ -662,7 +669,10 @@ function Factory(Wallet = WalletFactory("jingtum")) {
      *    amount, required
      * @returns {Transaction}
      */
-    public static buildBrokerageTx(options, remote: any = {}) {
+    public static buildBrokerageTx(
+      options: IBrokerageTxOptions,
+      remote: any = {}
+    ) {
       const tx = new Transaction(remote)
       if (options === null || typeof options !== "object") {
         tx.tx_json.obj = new Error("invalid options type")
@@ -670,14 +680,17 @@ function Factory(Wallet = WalletFactory("jingtum")) {
       }
       const account = options.account
       const feeAccount = options.feeAccount
-      const mol = options.mol || options.molecule
+      const mol =
+        Number(options.mol) === 0 || Number(options.molecule) === 0
+          ? 0
+          : options.mol || options.molecule
       const den = options.den || options.denominator
       const amount = options.amount
       if (!utils.isValidAddress(account)) {
         tx.tx_json.src = new Error("invalid address")
         return tx
       }
-      if (!/^\d+$/.test(mol)) {
+      if (!/^\d+$/.test(`${mol}`)) {
         // (正整数 + 0)
         tx.tx_json.mol = new Error(
           "invalid mol, it is a positive integer or zero."
@@ -841,6 +854,102 @@ function Factory(Wallet = WalletFactory("jingtum")) {
         return tx
       }
       tx.tx_json = tx_json
+      return tx
+    }
+
+    public static buildTokenIssueTx(options, remote: any = {}) {
+      const tx = new Transaction(remote)
+      if (options === null || typeof options !== "object") {
+        tx.tx_json.obj = new Error("invalid options type")
+        return tx
+      }
+      const account = options.account
+      const publisher = options.publisher
+      const token = options.token
+      const number = options.number
+      if (!utils.isValidAddress(account)) {
+        tx.tx_json.account = new Error("invalid account address")
+        return tx
+      }
+      if (!utils.isValidAddress(publisher)) {
+        tx.tx_json.publisher = new Error("invalid publisher address")
+        return tx
+      }
+      if (isNaN(number) || Number(number) < 0) {
+        tx.tx_json.number = new Error(
+          "invalid number, it must be a number and greater than zero"
+        )
+        return tx
+      }
+      tx.tx_json.TransactionType = "TokenIssue"
+      tx.tx_json.Account = account
+      tx.tx_json.Issuer = publisher
+      tx.tx_json.FundCode = convertStringToHex(token)
+      tx.tx_json.TokenSize = Number(number)
+      return tx
+    }
+
+    public static buildTransferTokenTx(options, remote: any = {}) {
+      const tx = new Transaction(remote)
+      if (options === null || typeof options !== "object") {
+        tx.tx_json.obj = new Error("invalid options type")
+        return tx
+      }
+      const publisher = options.publisher
+      const receiver = options.receiver
+      const token = options.token
+      const tokenId = options.tokenId
+      const memos = options.memos || []
+      if (!utils.isValidAddress(receiver)) {
+        tx.tx_json.receiver = new Error("invalid receiver address")
+        return tx
+      }
+      if (!utils.isValidAddress(publisher)) {
+        tx.tx_json.publisher = new Error("invalid publisher address")
+        return tx
+      }
+      tx.tx_json.TransactionType = "TransferToken"
+      tx.tx_json.Account = publisher
+      tx.tx_json.Destination = receiver
+      if (token) {
+        tx.tx_json.FundCode = convertStringToHex(token)
+      }
+      if (memos.length > 0) {
+        if (typeof memos === "object") {
+          // array
+          for (const memo of memos) {
+            if (typeof memo === "string") {
+              tx.addMemo(memo)
+            } else if ("MemoData" in memo && "MemoFormat" in memo) {
+              tx.addMemo(memo.MemoData, memo.MemoFormat)
+            }
+          }
+        } else if (typeof memos === "string") {
+          // string
+          tx.addMemo(memos)
+        } else {
+          tx.addMemo("specified memo incorrect")
+        }
+      }
+      tx.tx_json.TokenID = tokenId // 64位，不足的补零吗？
+      return tx
+    }
+
+    public static buildTokenDelTx(options, remote: any = {}) {
+      const tx = new Transaction(remote)
+      if (options === null || typeof options !== "object") {
+        tx.tx_json.obj = new Error("invalid options type")
+        return tx
+      }
+      const publisher = options.publisher
+      const tokenId = options.tokenId
+      if (!utils.isValidAddress(publisher)) {
+        tx.tx_json.publisher = new Error("invalid publisher address")
+        return tx
+      }
+      tx.tx_json.TransactionType = "TokenDel"
+      tx.tx_json.Account = publisher
+      tx.tx_json.TokenID = tokenId
       return tx
     }
 
@@ -1023,8 +1132,6 @@ function Factory(Wallet = WalletFactory("jingtum")) {
     // end of static transaction builds
 
     public tx_json
-    public flag_tx_json: boolean
-    public flag_tx_memo: boolean
     public readonly _token: string
     public _secret: string | undefined
     public abi: any[] | undefined
@@ -1039,8 +1146,6 @@ function Factory(Wallet = WalletFactory("jingtum")) {
       this.tx_json = { Flags: 0, Fee: utils.getFee() }
       this._filter = filter
       this.command = "submit"
-      this.flag_tx_json = false
-      this.flag_tx_memo = false
     }
 
     /**
@@ -1104,19 +1209,21 @@ function Factory(Wallet = WalletFactory("jingtum")) {
      */
     public addMemo(memo, format = "text") {
       const _memo: any = {}
-      if (format === "text") {
+      if (format === "text" || format === "TEXT") {
         if (typeof memo !== "string") {
           _memo.MemoData = memo
           _memo.MemoFormat = "json"
-        } else if (isHexMemoString(memo)) {
-          _memo.MemoFormat = "hex"
-          _memo.MemoData = memo
         } else {
           _memo.MemoData = memo
         }
-      } else {
+      } else if (format === "json" || format === "JSON") {
         _memo.MemoData = memo
-        _memo.MemoFormat = format
+        _memo.MemoFormat = "json"
+      } else if (format === "hex" || format === "HEX") {
+        _memo.MemoData = memo
+        _memo.MemoFormat = "hex"
+      } else {
+        throw new Error("only text/json/hex are supported memo format")
       }
       const Memos = (this.tx_json.Memos || []).concat({ Memo: _memo })
       const so = new jser([])
@@ -1242,27 +1349,6 @@ function Factory(Wallet = WalletFactory("jingtum")) {
       this.tx_json.Sequence = Number(sequence)
     }
 
-    public swt_normalize() {
-      if (!this.flag_tx_json) {
-        // run only once
-        tx_json_filter(this.tx_json)
-        this.flag_tx_json = true
-      }
-    }
-
-    public memo_normalize(reverse = false) {
-      normalize_memo(this.tx_json, reverse)
-      if (this.tx_json.Memos) {
-        for (const memo of this.tx_json.Memos) {
-          if (memo.Memo.MemoFormat) {
-            memo.Memo.MemoFormat = convertStringToHex(memo.Memo.MemoFormat)
-          }
-          memo.Memo.MemoData = convertStringToHex(memo.Memo.MemoData)
-        }
-      }
-      this.flag_tx_memo = true
-    }
-
     /*
      * options: {
      *   address: '',
@@ -1270,6 +1356,22 @@ function Factory(Wallet = WalletFactory("jingtum")) {
      * }
      */
     public multiSigning(options: IMultiSigningOptions) {
+      this.tx_json.SigningPubKey = "" // 多签中该字段必须有且必须为空字符串
+      if (!this.tx_json.Sequence) {
+        this.tx_json.Sequence = new Error("please set sequence first")
+        return this
+      }
+      normalize_memo(this.tx_json)
+      normalize_swt(this.tx_json)
+      // make tx_json.Amount.value string
+      if (
+        this.tx_json.hasOwnProperty("Amount") &&
+        this.tx_json.Amount.hasOwnProperty("value")
+      ) {
+        this.tx_json.Amount.value = `${this.tx_json.Amount.value}`
+      }
+
+      // const tx_json_verify = JSON.parse(JSON.stringify(this.tx_json))
       const signers = this.tx_json.Signers || []
       if (signers.length > 0) {
         // 验签
@@ -1302,7 +1404,6 @@ function Factory(Wallet = WalletFactory("jingtum")) {
 
       const tx_json = JSON.parse(JSON.stringify(this.tx_json))
       delete tx_json.Signers
-      tx_json_filter(tx_json)
       normalize_memo(tx_json, true)
 
       let blob = jser.from_json(tx_json)
@@ -1349,6 +1450,7 @@ function Factory(Wallet = WalletFactory("jingtum")) {
     public multiSigned() {
       // 多重签名完毕
       this.command = "submit_multisigned"
+      normalize_swt(this.tx_json)
       const signers = this.tx_json.Signers || []
       if (signers.length > 0) {
         // 验签
@@ -1357,11 +1459,11 @@ function Factory(Wallet = WalletFactory("jingtum")) {
           return this
         }
       }
+      normalize_swt(this.tx_json, true)
       if (Number(signers.length * Wallet.getFee()) > Number(this.tx_json.Fee)) {
         // 验证燃料费是否够用
         this.tx_json.Fee = new Error("low fee")
       }
-      this.memo_normalize() // 编码memo
       return this
     }
 
@@ -1501,7 +1603,13 @@ function Factory(Wallet = WalletFactory("jingtum")) {
             abi: this.abi
           }
         }
-        this._remote._submit(this.command, data, this._filter, callback)
+        if (this._remote.hasOwnProperty("_submit")) {
+          // lib
+          this._remote._submit(this.command, data, this._filter, callback)
+        } else {
+          // api/proxy/rpc
+          throw new Error("please use .submitPromise() for non-ws library")
+        }
       } else {
         // 签名之后传给底层
         this.sign((err, blob) => {
@@ -1513,7 +1621,13 @@ function Factory(Wallet = WalletFactory("jingtum")) {
             } else {
               data = { tx_blob: blob, abi: this.abi }
             }
-            this._remote._submit(this.command, data, this._filter, callback)
+            if (this._remote.hasOwnProperty("_submit")) {
+              // lib
+              this._remote._submit(this.command, data, this._filter, callback)
+            } else {
+              // api/proxy/rpc
+              throw new Error("please use .submitPromise() for non-ws library")
+            }
           }
         })
       }
@@ -1558,6 +1672,17 @@ function Factory(Wallet = WalletFactory("jingtum")) {
             }
             this._remote._submit(this.command, data, this._filter, callback)
           })
+        } else if ("rpcSubmit" in this._remote) {
+          // rpc remote
+          if (this.command === "submit_multisigned") {
+            return this._remote.rpcSubmitMultisigned(data)
+          } else if (blob) {
+            delete data.blob
+            data.tx_blob = blob
+            return this._remote.rpcSubmit(data)
+          } else {
+            return Promise.reject("unable to handle for multisigned tx")
+          }
         } else if ("txSubmitPromise" in this._remote) {
           // api remote
           return this._remote.txSubmitPromise(this)
@@ -1580,7 +1705,7 @@ function Factory(Wallet = WalletFactory("jingtum")) {
 
     // private and protected methods
     public async _signPromise(): Promise<any> {
-      this.swt_normalize()
+      normalize_swt(this.tx_json)
       return new Promise((resolve, reject) => {
         try {
           const wt = new Wallet(this._secret)
@@ -1616,6 +1741,12 @@ function Factory(Wallet = WalletFactory("jingtum")) {
             .submitPromise()
           this.tx_json.Sequence = data.account_data.Sequence
           return Promise.resolve(this)
+        } else if ("rpcAccountInfo" in this._remote) {
+          data = await this._remote.rpcAccountInfo({
+            account: this.tx_json.Account
+          })
+          this.tx_json.Sequence = data.account_data.Sequence
+          return Promise.resolve(this)
         } else if ("getAccountSequence" in this._remote) {
           data = await this._remote.getAccountSequence(this.tx_json.Account)
           this.tx_json.Sequence = data.sequence
@@ -1647,7 +1778,7 @@ function Factory(Wallet = WalletFactory("jingtum")) {
 
   function signing(tx, callback) {
     try {
-      tx.swt_normalize()
+      normalize_swt(tx.tx_json)
       const wt = new Wallet(tx._secret)
       tx.tx_json.SigningPubKey = wt.getPublicKey()
       const blob = jser.from_json(tx.tx_json)
@@ -1673,7 +1804,6 @@ function Factory(Wallet = WalletFactory("jingtum")) {
     const tx_json_new = JSON.parse(JSON.stringify(tx_json))
     const signers = tx_json_new.Signers || []
     delete tx_json_new.Signers
-    tx_json_filter(tx_json_new)
     normalize_memo(tx_json_new, true)
     if (signers.length > 0) {
       for (const signer of signers) {

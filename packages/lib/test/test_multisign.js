@@ -49,9 +49,9 @@ const MULTISIGN = {
 
 const Sequence = 11
 
-describe("test multisign", function() {
-  describe("test multiSigning", function() {
-    it("should match result", function() {
+describe("test multisign", function () {
+  describe("test multiSigning", function () {
+    it("should match result", function () {
       let remote = new Remote({ server: JT_NODE })
       let inst = Transaction.buildPaymentTx(
         {
@@ -80,8 +80,8 @@ describe("test multisign", function() {
     })
   })
 
-  describe("test buildMultisignedTx", function() {
-    it("should match result", function() {
+  describe("test buildMultisignedTx", function () {
+    it("should match result", function () {
       let remote = new Remote({ server: JT_NODE })
       let inst = Transaction.buildPaymentTx(
         {
@@ -104,6 +104,7 @@ describe("test multisign", function() {
         tx_json: inst.tx_json
       })
       inst = Transaction.buildMultisignedTx(inst.tx_json)
+      inst.multiSigned()
       expect(inst.command).to.equal("submit_multisigned")
       expect(inst.tx_json).to.deep.equal({
         ...TX_PAY,

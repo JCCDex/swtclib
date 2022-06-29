@@ -1,6 +1,6 @@
 {
   "name": "@swtc/proxy",
-  "version": "1.0.9",
+  "version": "1.1.1",
   "description": "rest api to jingtum blockchain",
   "keywords": [
     "rest",
@@ -31,7 +31,7 @@
     "tslint": "tslint tssrc/**/*.ts",
     "build": "tsc",
     "start": "tsc; node start.js",
-    "test": "tsc; jest test/functions.spec.js test/store.spec.js; jest test/koa.spec.js; jest test/multisign.spec.js",
+    "test": "tsc; jest -i test/functions.spec.js test/store.spec.js; jest test/koa.spec.js; jest test/multisign.spec.js",
     "test:api": "tsc; jest test/koa.spec.js",
     "test:multisign": "tsc; jest test/multisign.spec.js",
     "test:detect": "tsc; jest --detectOpenHandles",
@@ -41,15 +41,15 @@
     "url": "https://github.com/swtcca/swtclib/issues"
   },
   "dependencies": {
-    "@swtc/address-codec": "^1.0.7",
-    "@swtc/common": "^1.0.11",
-    "@swtc/keypairs": "^1.0.10",
-    "@swtc/lib": "^1.0.8",
-    "@swtc/serializer": "^1.0.9",
-    "@swtc/transaction": "^1.0.11",
-    "@swtc/utils": "^1.0.7",
-    "@swtc/wallet": "^1.0.11",
-    "@vue/runtime-core": "^3.0.0-alpha.5",
+    "@swtc/address-codec": "^1.1.1",
+    "@swtc/common": "^1.1.1",
+    "@swtc/keypairs": "^1.1.4",
+    "@swtc/lib": "^1.1.1",
+    "@swtc/serializer": "^1.1.1",
+    "@swtc/transaction": "^1.1.1",
+    "@swtc/utils": "^1.1.1",
+    "@swtc/wallet": "^1.1.1",
+    "@vue/runtime-core": "3.1.5",
     "chalk": "^3.0.0",
     "koa": "^2.11.0",
     "koa-bodyparser": "^4.2.1",
@@ -61,9 +61,16 @@
     "static-koa-router": "^1.0.3"
   },
   "devDependencies": {
-    "@types/jest": "^24.9.1",
-    "jest": "^25.0.0",
-    "prettier": "^1.19.1",
-    "rollup": "^1.29.1"
+    "@types/jest": "^26.0.8",
+    "@types/node": "^14.0.27",
+    "jest": "^26.1.0",
+    "jest-esm-transformer": "^1.0.0",
+    "prettier": "^2.0.5",
+    "rollup": "^2.23.0",
+    "supertest": "^4.0.2",
+    "ts-jest": "^26.1.4",
+    "tslib": "^2.0.0",
+    "tslint": "^6.1.2",
+    "typescript": "^3.9.7"
   }
 }

@@ -1,16 +1,13 @@
+export { IAlgorithm, IKeypair, IGenerateOptions } from "@swtc/keypairs"
+
 export interface IWallet {
   secret: string | null
   address: string | null
 }
 
-export interface IGenerateOptions {
-  entropy?: Uint8Array
-  algorithm?: IAlgorithm
-}
-
 export interface IAmount {
   currency: string
-  value: number
+  value: string | number
   issuer: string
 }
 
@@ -19,4 +16,22 @@ export interface ICurrency {
   issuer: string
 }
 
-export type IAlgorithm = "ecdsa-secp256k1" | "ed25519"
+export interface IXlib {
+  [key: string]: string
+}
+
+export interface ICurrencies {
+  [key: string]: string
+}
+
+export interface IChainConfig {
+  code?: string
+  currency?: string
+  issuer?: string
+  guomi?: boolean
+  ACCOUNT_ALPHABET?: string
+  fee?: number
+  CURRENCIES?: ICurrencies
+  XLIB?: IXlib
+  [key: string]: any
+}

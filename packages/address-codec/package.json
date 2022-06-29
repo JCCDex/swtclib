@@ -1,12 +1,12 @@
 {
   "name": "@swtc/address-codec",
-  "version": "1.0.7",
+  "version": "1.1.1",
   "description": "encode decode base58 SWTC identifiers",
   "main": "cjs/index.js",
   "module": "esm/index.js",
   "license": "ISC",
   "dependencies": {
-    "@swtc/common": "^1.0.11",
+    "@swtc/common": "^1.1.1",
     "base-x": "^3.0.7",
     "create-hash": "^1.2.0"
   },
@@ -30,13 +30,23 @@
     "prettier:check": "prettier -c tssrc/*.ts",
     "prettier:tabs": "prettier --use-tabs --write package.json tssrc/*.ts",
     "tslint": "tslint tssrc/*.ts",
+    "test:guomi": "jest test/*.guomi.js",
     "test": "jest"
   },
   "devDependencies": {
-    "@types/jest": "^24.9.1",
-    "jest": "^25.0.0",
-    "prettier": "^1.19.1",
-    "rollup": "^1.29.1"
+    "@rollup/plugin-commonjs": "^14.0.0",
+    "@rollup/plugin-node-resolve": "^8.4.0",
+    "@rollup/plugin-typescript": "^5.0.2",
+    "@types/jest": "^26.0.8",
+    "husky": "^4.2.5",
+    "jest": "^26.1.0",
+    "prettier": "^2.0.5",
+    "pretty-quick": "^2.0.1",
+    "rollup": "^2.23.0",
+    "rollup-plugin-terser": "^6.1.0",
+    "ts-jest": "^26.1.4",
+    "tslint": "^6.1.2",
+    "typescript": "^3.9.7"
   },
   "keywords": [
     "codec",

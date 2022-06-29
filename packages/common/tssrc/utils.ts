@@ -138,7 +138,8 @@ export function txnType(tx, account) {
     tx.Account === account ||
     tx.Target === account ||
     (tx.Destination && tx.Destination === account) ||
-    (tx.LimitAmount && tx.LimitAmount.issuer === account)
+    (tx.LimitAmount && tx.LimitAmount.issuer === account) ||
+    tx.BlackListAccountID === account
   ) {
     switch (tx.TransactionType) {
       case "Payment": // 支付类
@@ -163,7 +164,11 @@ export function txnType(tx, account) {
       case "AlethContract": // solidity版本合约类
       case "Brokerage": // 设置手续费类
       case "SignerListSet": // 签名列表类
-        // TODO to sub-class tx type
+      case "SetBlackList": // 黑名单
+      case "RemoveBlackList": // 解除黑名单
+      case "TokenIssue": // 原生721设置发行权限
+      case "TransferToken": // 原生721token流转
+      case "TokenDel": // 原生721token删除
         return tx.TransactionType.toLowerCase()
       default:
         // TODO CHECK

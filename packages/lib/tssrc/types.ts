@@ -1,8 +1,11 @@
-import { IMarker, IAmount } from "@swtc/transaction"
+import { IMarker, IAmount, ICurrencies, IXlib } from "@swtc/transaction"
 export {
+  ICurrencies,
+  IXlib,
   IMarker,
   ICurrency,
   IAmount,
+  IChainConfig,
   ISwtcTxOptions,
   IPaymentTxOptions,
   IOfferCreateTxOptions,
@@ -29,15 +32,17 @@ export interface IRemoteOptions {
   local_sign?: boolean
   timeout?: number
   failover?: boolean
+  CURRENCIES?: ICurrencies
+  XLIB?: IXlib
 }
 
 export interface IRequestLedgerOptions {
-  ledger_index?: string | number
+  ledger_index?: "validated" | "closed" | "current" | number
   ledger_hash?: string
-  full?: boolean
   expand?: boolean
   transactions?: boolean
   accounts?: boolean
+  full?: boolean
 }
 
 export interface IRequestAccountOptions {
